@@ -1,6 +1,6 @@
 package com.lohika.morning.spark.presentation.api.service;
 
-import com.lohika.morning.spark.presentation.api.ApplicationConfiguration;
+import com.lohika.morning.spark.presentation.api.AttendeeAggregatorApplication;
 import com.lohika.morning.spark.presentation.spark.distributed.library.type.EventsByParticipant;
 import com.lohika.morning.spark.presentation.spark.distributed.library.type.ParticipantEmailPosition;
 import com.lohika.morning.spark.presentation.spark.distributed.library.type.ParticipantsByCompany;
@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {ApplicationConfiguration.class, ApplicationConfigurationTest.class})
+@ContextConfiguration(classes = {AttendeeAggregatorApplication.class, ApplicationConfigurationTest.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class AnalyticsServiceConsistencyTest {
 
