@@ -4,15 +4,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.lohika.morning.spark.presentation</groupId>
-    <artifactId>spark-samples-jeeconf-kyiv</artifactId>
+    <groupId>com.lohika.morning</groupId>
+    <artifactId>attendee-aggregator</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
 
     <modules>
-        <module>spark-distributed-library</module>
-        <module>spark-driver</module>
-        <module>api</module>
+        <module>attendee-aggregator-distributed-library</module>
+        <module>attendee-aggregator-driver</module>
+        <module>attendee-aggregator-api</module>
     </modules>
 
     <properties>
@@ -35,7 +35,7 @@
 
             <dependency>
                 <groupId>com.lohika.morning.spark.presentation</groupId>
-                <artifactId>spark-distributed-library</artifactId>
+                <artifactId>attendee-aggregator-distributed-library</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -70,7 +70,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.11</version>
+                <version>4.12</version>
                 <scope>test</scope>
             </dependency>
 
