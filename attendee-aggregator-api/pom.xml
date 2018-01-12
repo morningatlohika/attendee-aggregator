@@ -3,18 +3,19 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>spark-samples-jeeconf-kyiv</artifactId>
-        <groupId>com.lohika.morning.spark.presentation</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <artifactId>attendee-aggregator</artifactId>
+        <groupId>com.lohika.morning</groupId>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>api</artifactId>
+    <artifactId>attendee-aggregator-api</artifactId>
     <modelVersion>4.0.0</modelVersion>
 
     <dependencies>
         <dependency>
-            <groupId>com.lohika.morning.spark.presentation</groupId>
-            <artifactId>spark-driver</artifactId>
+            <groupId>com.lohika.morning</groupId>
+            <artifactId>attendee-aggregator-driver</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
