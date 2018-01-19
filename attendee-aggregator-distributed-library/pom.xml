@@ -56,7 +56,7 @@
                             </excludes>
                         </filter>
                     </filters>
-                    <finalName>${project.artifactId}-${project.version}-uber</finalName>
+                    <finalName>${project.artifactId}-uber-${project.version}</finalName>
                 </configuration>
             </plugin>
         </plugins>
