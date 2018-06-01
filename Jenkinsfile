@@ -29,7 +29,7 @@ pipeline() {
         stage('Configuration') {
             steps {
                 script {
-                    maven.useWrapper = true
+//                    maven.useWrapper = true
                     maven.deployer server: server, repo: 'morning-at-lohika-snapshots'
                 }
             }
