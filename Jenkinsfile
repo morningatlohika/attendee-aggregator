@@ -73,7 +73,7 @@ pipeline() {
         success {
             script {
                 dir("${env.WORKSPACE}") {
-                    archiveArtifacts 'build/libs/*.jar'
+                    archiveArtifacts '*/target/*.jar'
                 }
 
                 slackSend(
