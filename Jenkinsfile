@@ -41,9 +41,11 @@ pipeline() {
                     echo 's'
                     sh "printenv"
                     if (env.BRANCH_NAME == 'master') {
-                        maven.run pom: "pom.xml", goals: 'clean install artifactoryPublish'
+                        echo 's1'
+                        maven.run pom: "pom.xml", goals: 'clean'
                     } else {
-                        maven.run om: "pom.xml", goals: 'clean install'
+                        echo 's2'
+                        maven.run om: "pom.xml", goals: 'clean'
                     }
                     echo 'ss'
                 }
