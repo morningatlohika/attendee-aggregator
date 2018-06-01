@@ -39,9 +39,9 @@ pipeline() {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'master') {
-                        maven.run goals: 'clean build artifactoryPublish'
+                        maven.run pom: "pom.xml", goals: 'clean build artifactoryPublish'
                     } else {
-                        maven.run goals: 'clean build'
+                        maven.run om: "pom.xml", goals: 'clean build'
                     }
                 }
             }
