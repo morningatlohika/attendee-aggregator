@@ -38,11 +38,14 @@ pipeline() {
         stage('Maven build and deploy') {
             steps {
                 script {
+                    echo 's'
+                    sh "printenv"
                     if (env.BRANCH_NAME == 'master') {
                         maven.run pom: "pom.xml", goals: 'clean install artifactoryPublish'
                     } else {
                         maven.run om: "pom.xml", goals: 'clean install'
                     }
+                    echo 'ss'
                 }
             }
         }
