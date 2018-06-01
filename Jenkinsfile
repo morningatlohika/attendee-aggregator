@@ -30,7 +30,7 @@ pipeline() {
             steps {
                 script {
 //                    maven.useWrapper = true
-                    maven.deployer server: server, snapshotRep: 'morning-at-lohika-snapshots'
+                    maven.deployer server: server, snapshotRepo: 'morning-at-lohika-snapshots'
                 }
             }
         }
