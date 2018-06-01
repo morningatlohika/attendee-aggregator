@@ -45,7 +45,9 @@ pipeline() {
                         rtMaven.run pom: "pom.xml", goals: 'clean'
                     } else {
                         echo 's2 '
-                        rtMaven.run pom: 'pom.xml', goals: 'clean install -DskipTests', buildInfo: buildInfo
+//                        rtMaven.run pom: 'pom.xml', goals: 'clean install -DskipTests', buildInfo: buildInfo
+                        sh "./mvnw clean install"
+                    }
                     echo 'ss'
                 }
             }
