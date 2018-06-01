@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy Jenkinsfile
 
 def server = Artifactory.server "Artifactory"
-def maven = Artifactory.newMavenBuild()
+def rtMaven = Artifactory.newMavenBuild()
 def buildInfo = Artifactory.newBuildInfo()
 buildInfo.env.capture = true
 
@@ -29,8 +29,8 @@ pipeline() {
         stage('Configuration') {
             steps {
                 script {
-//                    maven.useWrapper = true
-                    maven.deployer server: server, snapshotRepo: 'morning-at-lohika-snapshots'
+//                    rtMaven.useWrapper = true
+                    rtMaven.deployer server: server, snapshotRepo: 'morning-at-lohika-snapshots'
                 }
             }
         }
@@ -42,11 +42,10 @@ pipeline() {
                     sh "printenv"
                     if (env.BRANCH_NAME == 'master') {
                         echo 's1'
-                        maven.run pom: "pom.xml", goals: 'clean'
+                        rtMaven.run pom: "pom.xml", goals: 'clean'
                     } else {
-                        echo 's2'
-                        maven.run om: "pom.xml", goals: 'clean'
-                    }
+                        echo 's2 '
+                        rtMaven.run pom: 'pom.xml', goals: 'clean install -DskipTests', buildInfo: buildInfo
                     echo 'ss'
                 }
             }
