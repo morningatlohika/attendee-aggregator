@@ -29,7 +29,6 @@ pipeline() {
         stage('Configuration') {
             steps {
                 script {
-//                    rtMaven.useWrapper = true
                     rtMaven.deployer server: server, snapshotRepo: 'morning-at-lohika-snapshots'
                 }
             }
@@ -38,17 +37,11 @@ pipeline() {
         stage('Maven build and deploy') {
             steps {
                 script {
-                    echo 's'
-                    sh "printenv"
                     if (env.BRANCH_NAME == 'master') {
-                        echo 's1'
-                        rtMaven.run pom: "pom.xml", goals: 'clean'
+                        sh "./mvnw clean install artifactoryPublish"
                     } else {
-                        echo 's2 '
-//                        rtMaven.run pom: 'pom.xml', goals: 'clean install -DskipTests', buildInfo: buildInfo
                         sh "./mvnw clean install"
                     }
-                    echo 'ss'
                 }
             }
         }
