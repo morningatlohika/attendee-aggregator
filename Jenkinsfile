@@ -1,9 +1,7 @@
 #!/usr/bin/env groovy Jenkinsfile
 
 def server = Artifactory.server "Artifactory"
-def rtMaven = Artifactory.newMavenBuild()
 def buildInfo = Artifactory.newBuildInfo()
-buildInfo.env.capture = true
 
 pipeline() {
 
@@ -38,10 +36,13 @@ pipeline() {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'master') {
-                        sh "./mvnw clean install artifactoryPublish"
+                        buildInfo = sh "./mvnw clean install"
                     } else {
-                        sh "./mvnw clean install"
+                        buildInfo = sh "./mvnw clean install"
                     }
+                    buildInfo.env.filter.addExclude("*TOKEN*")
+                    buildInfo.env.filter.addExclude("*HOOK*")
+                    buildInfo.env.collect()
                 }
             }
         }
