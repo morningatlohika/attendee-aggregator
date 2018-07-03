@@ -38,10 +38,13 @@ pipeline() {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'master') {
-                        sh "./mvnw clean install artifactoryPublish"
+                        sh "./mvnw clean install"
                     } else {
                         sh "./mvnw clean install"
                     }
+                    buildInfo.env.filter.addExclude("*TOKEN*")
+                    buildInfo.env.filter.addExclude("*HOOK*")
+                    buildInfo.env.collect()
                 }
             }
         }
