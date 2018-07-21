@@ -38,11 +38,6 @@ pipeline() {
     stage('Configuration') {
       steps {
         script {
-          rtMaven.deployer.deployArtifacts = env.BRANCH_NAME == 'master'
-          rtMaven.deployer.deployMavenDescriptors = true
-          rtMaven.deployer.deployIvyDescriptors = true
-          gradle.deployer.mavenCompatible = true
-
           buildInfo.env.filter.addExclude("*TOKEN*")
           buildInfo.env.filter.addExclude("*HOOK*")
           buildInfo.env.collect()
@@ -53,6 +48,7 @@ pipeline() {
     stage('Build') {
       steps {
         script {
+          rtMaven.deployer.deployArtifacts = false
           info = rtMaven.run pom: 'pom.xml', goals: 'clean verify'
           buildInfo.append(info)
         }
@@ -66,6 +62,7 @@ pipeline() {
       }
       steps {
         script {
+          rtMaven.deployer.deployArtifacts = true
           rtMaven.deployer server: server, snapshotRepo: 'morning-at-lohika-snapshots'
           info = rtMaven.run pom: 'pom.xml', goals: 'install'
           buildInfo.append(info)
@@ -97,6 +94,7 @@ pipeline() {
       }
       steps {
         script {
+          rtMaven.deployer.deployArtifacts = false
           info = rtMaven.run pom: 'pom.xml', goals: 'clean verify'
           buildInfo.append(info)
         }
@@ -113,6 +111,8 @@ pipeline() {
           dir("${env.WORKSPACE}") {
             sh 'git log --pretty=format:"%h" -n 2 | sed -n 2p | xargs git checkout'
           }
+
+          rtMaven.deployer.deployArtifacts = true
           rtMaven.deployer server: server, releaseRepo: 'morning-at-lohika'
           info = rtMaven.run pom: 'pom.xml', goals: 'clean install'
           buildInfo.append(info)
