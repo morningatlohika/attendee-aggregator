@@ -2,98 +2,178 @@
 
 def server = Artifactory.server "Artifactory"
 def rtMaven = Artifactory.newMavenBuild()
+rtMaven.tool = "default"
 def buildInfo = Artifactory.newBuildInfo()
-buildInfo.env.capture = true
 
 pipeline() {
 
-    agent any
+  agent any
 
-    triggers {
-        pollSCM('H/10 * * * *')
+  triggers {
+    pollSCM('H/10 * * * *')
+  }
+
+  options {
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+  }
+
+  environment {
+    SLACK_AUTOMATION_CHANNEL = "#automation"
+    SLACK_AUTOMATION_TOKEN = credentials("jenkins-ci-integration-token")
+    JENKINS_HOOKS = credentials("morning-at-lohika-jenkins-ci-hooks")
+    GIT_TOKEN = credentials("Jenkins-GitHub-Apps-Personal-access-tokens")
+  }
+
+  parameters {
+    booleanParam(
+        name: 'release',
+        description: 'release new version',
+        defaultValue: false
+    )
+  }
+
+  stages {
+
+    stage('Configuration') {
+      steps {
+        script {
+          rtMaven.deployer.deployArtifacts = env.BRANCH_NAME == 'master'
+          rtMaven.deployer.deployMavenDescriptors = true
+          rtMaven.deployer.deployIvyDescriptors = true
+          gradle.deployer.mavenCompatible = true
+
+          buildInfo.env.filter.addExclude("*TOKEN*")
+          buildInfo.env.filter.addExclude("*HOOK*")
+          buildInfo.env.collect()
+        }
+      }
     }
 
-    options {
-        disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+    stage('Build') {
+      steps {
+        script {
+          info = rtMaven.run pom: 'pom.xml', goals: 'clean verify'
+          buildInfo.append(info)
+        }
+      }
     }
 
-    environment {
-        SLACK_AUTOMATION_CHANNEL = "#automation"
-        SLACK_AUTOMATION_TOKEN = credentials("jenkins-ci-integration-token")
-        JENKINS_HOOKS = credentials("morning-at-lohika-jenkins-ci-hooks")
+    stage('Publish SNAPSHOT') {
+      when {
+        branch 'master'
+        expression { params.release == false }
+      }
+      steps {
+        script {
+          rtMaven.deployer server: server, snapshotRepo: 'morning-at-lohika-snapshots'
+          info = rtMaven.run pom: 'pom.xml', goals: 'install'
+          buildInfo.append(info)
+        }
+      }
     }
 
-    stages {
-
-        stage('Configuration') {
-            steps {
-                script {
-                    rtMaven.deployer server: server, snapshotRepo: 'morning-at-lohika-snapshots'
-                }
-            }
+    stage('Pre Release') {
+      when {
+        branch 'master'
+        expression { params.release == true }
+      }
+      steps {
+        script {
+          dir("${env.WORKSPACE}") {
+            sh "git config remote.origin.url 'https://${env.GIT_TOKEN}@github.com/morningatlohika/email-campaign-service.git'"
+            sh 'git clean -fdx'
+            sh "git checkout ${env.BRANCH_NAME}"
+            sh 'git pull'
+          }
         }
-
-        stage('Maven build and deploy') {
-            steps {
-                script {
-                    if (env.BRANCH_NAME == 'master') {
-                        sh "./mvnw clean install"
-                    } else {
-                        sh "./mvnw clean install"
-                    }
-                    buildInfo.env.filter.addExclude("*TOKEN*")
-                    buildInfo.env.filter.addExclude("*HOOK*")
-                    buildInfo.env.collect()
-                }
-            }
-        }
+      }
     }
 
-    post {
-        always {
-            script {
-                publishHTML(target: [
-                    allowMissing         : true,
-                    alwaysLinkToLastBuild: false,
-                    keepAll              : true,
-                    reportDir            : 'build/reports/tests/test',
-                    reportFiles          : 'index.html',
-                    reportName           : "Test Summary"
-                ])
-                junit testResults: 'build/test-results/test/*.xml', allowEmptyResults: true
-                server.publishBuildInfo buildInfo
-            }
+    stage('Release') {
+      when {
+        branch 'master'
+        expression { params.release == true }
+      }
+      steps {
+        script {
+          info = rtMaven.run pom: 'pom.xml', goals: 'clean verify'
+          buildInfo.append(info)
         }
-
-        success {
-            script {
-                dir("${env.WORKSPACE}") {
-                    archiveArtifacts '*/target/*.jar'
-                }
-
-                slackSend(
-                    baseUrl: "${env.JENKINS_HOOKS}",
-                    token: "${env.SLACK_AUTOMATION_TOKEN}",
-                    channel: "${env.SLACK_AUTOMATION_CHANNEL}",
-                    botUser: true,
-                    color: "good",
-                    message: "BUILD SUCCESS: Job ${env.JOB_NAME} [${env.BUILD_NUMBER}]\nCheck console output at: ${env.BUILD_URL}"
-                )
-            }
-        }
-
-        failure {
-            script {
-                slackSend(
-                    baseUrl: "${env.JENKINS_HOOKS}",
-                    token: "${env.SLACK_AUTOMATION_TOKEN}",
-                    channel: "${env.SLACK_AUTOMATION_CHANNEL}",
-                    botUser: true,
-                    color: "danger",
-                    message: "BUILD FAILURE: Job ${env.JOB_NAME} [${env.BUILD_NUMBER}]\nCheck console output at: ${env.BUILD_URL}"
-                )
-            }
-        }
+      }
     }
+
+    stage('Publish RELEASE') {
+      when {
+        branch 'master'
+        expression { params.release == true }
+      }
+      steps {
+        script {
+          dir("${env.WORKSPACE}") {
+            sh 'git log --pretty=format:"%h" -n 2 | sed -n 2p | xargs git checkout'
+          }
+          rtMaven.deployer server: server, releaseRepo: 'morning-at-lohika'
+          info = rtMaven.run pom: 'pom.xml', goals: 'clean install'
+          buildInfo.append(info)
+        }
+      }
+    }
+
+    stage('Deploy') {
+      when {
+        buildingTag()
+      }
+      steps {
+        echo 'Deploying only because this commit is tagged...'
+      }
+    }
+  }
+
+  post {
+    always {
+      script {
+        publishHTML(target: [
+            allowMissing         : true,
+            alwaysLinkToLastBuild: false,
+            keepAll              : true,
+            reportDir            : 'build/reports/tests/test',
+            reportFiles          : 'index.html',
+            reportName           : "Test Summary"
+        ])
+        junit testResults: '**/target/surefire-reports/TEST-*.xml', allowEmptyResults: true
+        server.publishBuildInfo buildInfo
+      }
+    }
+
+    success {
+      script {
+        dir("${env.WORKSPACE}") {
+          archiveArtifacts '*/target/*.jar'
+        }
+
+        slackSend(
+            baseUrl: "${env.JENKINS_HOOKS}",
+            token: "${env.SLACK_AUTOMATION_TOKEN}",
+            channel: "${env.SLACK_AUTOMATION_CHANNEL}",
+            botUser: true,
+            color: "good",
+            message: "BUILD SUCCESS: Job ${env.JOB_NAME} [${env.BUILD_NUMBER}]\nCheck console output at: ${env.BUILD_URL}"
+        )
+      }
+    }
+
+    failure {
+      script {
+        slackSend(
+            baseUrl: "${env.JENKINS_HOOKS}",
+            token: "${env.SLACK_AUTOMATION_TOKEN}",
+            channel: "${env.SLACK_AUTOMATION_CHANNEL}",
+            botUser: true,
+            color: "danger",
+            message: "BUILD FAILURE: Job ${env.JOB_NAME} [${env.BUILD_NUMBER}]\nCheck console output at: ${env.BUILD_URL}"
+        )
+      }
+    }
+  }
 }
